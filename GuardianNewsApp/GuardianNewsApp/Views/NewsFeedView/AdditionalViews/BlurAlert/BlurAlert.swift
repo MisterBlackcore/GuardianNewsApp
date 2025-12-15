@@ -39,7 +39,7 @@ struct BlurAlert: View {
                         if let description = alert?.description {
                             Text(description)
                                 .font(.system(size: 13))
-                                .foregroundColor(.black.opacity(0.7))
+                                .foregroundColor(.black)
                                 .multilineTextAlignment(.center)
                         }
                     }
