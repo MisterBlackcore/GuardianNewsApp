@@ -10,12 +10,13 @@ import SwiftUI
 @main
 struct GuardianNewsApp: App {
     
-    @StateObject private var networkMonitor = NetworkMonitor()
+    @State private var networkMonitor = NetworkMonitor()
     
     var body: some Scene {
         WindowGroup {
             NewsFeedView()
-                .environmentObject(networkMonitor)
+                .environment(networkMonitor)
+                .preferredColorScheme(.light)
         }
     }
 }

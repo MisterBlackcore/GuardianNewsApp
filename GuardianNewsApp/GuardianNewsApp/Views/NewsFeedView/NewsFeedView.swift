@@ -9,7 +9,9 @@ import SwiftUI
 
 struct NewsFeedView: View {
     
+    @Environment(NetworkMonitor.self) private var newtworkMonitor
     @StateObject private var viewModel = NewsFeedViewModel()
+    @State private var showInternetAlert = false
     @State private var pushNavigation: NavigationResult?
     @State private var modalNavigation: NavigationResult?
     @State private var fullScreenNavigation: NavigationResult?
@@ -28,13 +30,19 @@ struct NewsFeedView: View {
                         .pickerStyle(SegmentedPickerStyle())
                         .padding(.horizontal, 16)
                         
-                        if viewModel.feedItemsToShow.isEmpty {
+                        if viewModel.feedItemsToShow.isEmpty || viewModel.error != nil {
                             VStack {
                                 switch viewModel.selectedOption {
                                 case .all:
-                                    ProgressView()
-                                        .scaleEffect(1.2)
-                                        .padding()
+                                    if newtworkMonitor.isConnected {
+                                        ProgressView()
+                                            .scaleEffect(1.2)
+                                            .padding()
+                                    } else {
+                                        RefreshFeedView {
+                                            viewModel.loadFeed(reset: true)
+                                        }
+                                    }
                                 default:
                                     FeedEmptyView(option: viewModel.selectedOption)
                                 }
@@ -79,7 +87,7 @@ struct NewsFeedView: View {
                 }
                 .background(Color.projectBeige)
             }
-            .navigationTitle("News Feed")
+            .navigationTitle("News")
             .onAppear {
                 if viewModel.feedItemsToShow.isEmpty {
                     viewModel.loadFeed()
@@ -102,6 +110,17 @@ struct NewsFeedView: View {
                     }
                 )
             }
+            .alert("No Internet Connection", isPresented: $showInternetAlert) {
+                Button("OK", role: .cancel) {
+                    if viewModel.feedItemsToShow.isEmpty {
+                        viewModel.loadFeed()
+                        showInternetAlert = false
+                    }
+                }
+            }
+            .onChange(of: newtworkMonitor.isConnected) { oldValue, newValue in
+                showInternetAlert = newValue
+            }
             .navigationDestination(item: $viewModel.urlToOpen) { url in
                 WebView(stringUrl: url)
             }
@@ -112,11 +131,7 @@ struct NewsFeedView: View {
     private func rowView(for item: FeedItem) -> some View {
         switch item {
         case .newsItem(let article):
-            NewsRowView(
-                articleModel: article,
-                rowOption: viewModel.selectedOption,
-                buttonAction: viewModel.updateItem
-            )
+            NewsRowView(articleModel: article, rowOption: viewModel.selectedOption, buttonAction: viewModel.updateItem)
             .frame(height: 110)
             .onTapGesture {
                 viewModel.urlToOpen = article.webUrl

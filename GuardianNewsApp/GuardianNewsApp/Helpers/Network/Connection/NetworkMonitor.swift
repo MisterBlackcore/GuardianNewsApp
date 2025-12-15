@@ -4,26 +4,20 @@
 //
 //  Created by Interexy on 11.12.25.
 //
-import SwiftUI
-import Network
-import Combine
 
-class NetworkMonitor: ObservableObject {
-    @Published var isConnected: Bool = true
-    
-    private let monitor = NWPathMonitor()
-    private let queue = DispatchQueue(label: "NetworkMonitorQueue")
+import Foundation
+import Network
+
+@Observable
+final class NetworkMonitor {
+    private let networkMonitor = NWPathMonitor()
+    private let workerQueue = DispatchQueue(label: "Monitor")
+    var isConnected = false
     
     init() {
-        monitor.pathUpdateHandler = { [weak self] path in
-            DispatchQueue.main.async {
-                self?.isConnected = path.status == .satisfied
-            }
+        networkMonitor.pathUpdateHandler = { path in
+            self.isConnected = path.status == .satisfied
         }
-        monitor.start(queue: queue)
-    }
-    
-    deinit {
-        monitor.cancel()
+        networkMonitor.start(queue: workerQueue)
     }
 }

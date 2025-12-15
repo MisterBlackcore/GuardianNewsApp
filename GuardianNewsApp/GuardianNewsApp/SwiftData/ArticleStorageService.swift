@@ -39,8 +39,6 @@ final class SwiftDataStorage: ObservableObject {
     }
 
     func saveOrUpdateArticle(_ article: GuardianArticle) {
-        guard let context = modelContext else { return }
-
         do {
             if let existing = fetchArticleById(article.id) {
                 if article.favorite == false && article.blocked == false {
@@ -107,7 +105,16 @@ final class SwiftDataStorage: ObservableObject {
             print(error.localizedDescription)
         }
     }
-
+    
+    func getBlockedSources() -> [String] {
+        savedArticles
+            .filter { $0.blocked == true }
+            .map { $0.sectionName }
+    }
+    
+    func getArticleIfSaved(by id: String) -> GuardianArticleData? {
+        return savedArticles.first { $0.id == id }
+    }
 
     private func fetchSavedArticles() {
         guard let context = modelContext else {

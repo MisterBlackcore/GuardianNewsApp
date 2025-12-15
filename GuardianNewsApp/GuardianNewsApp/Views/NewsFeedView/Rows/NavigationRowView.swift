@@ -41,7 +41,6 @@ struct NavigationRowView: View {
                             .foregroundColor(.projectWhite)
                             .font(.system(size: 17, weight: .bold))
                         
-                        
                         if let buttonSymbol = navigationModel.button_symbol {
                             HStack {
                                 Spacer()

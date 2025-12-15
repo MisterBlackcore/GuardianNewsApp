@@ -25,7 +25,8 @@ struct NewsRowView: View {
                 .padding(.trailing, 8)
             
             VStack(alignment: .leading, spacing: 8) {
-                Text(articleModel.webTitle)
+//                Text(articleModel.webTitle)
+                Text(articleModel.sectionName)
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.projectBlack)
                     .lineLimit(3)

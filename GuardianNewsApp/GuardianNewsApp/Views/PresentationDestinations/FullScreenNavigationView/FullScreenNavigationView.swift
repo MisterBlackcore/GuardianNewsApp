@@ -41,7 +41,6 @@ struct FullScreenNavigationView: View {
                     .foregroundColor(.projectGrey)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.red)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.projectWhite)

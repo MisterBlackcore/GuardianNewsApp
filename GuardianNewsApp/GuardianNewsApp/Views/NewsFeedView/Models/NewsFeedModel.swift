@@ -19,6 +19,15 @@ enum FeedItem: Identifiable {
             return "navigationModel-\(navigationModel.id)"
         }
     }
+    
+    func getArticle() -> GuardianArticle? {
+        switch self {
+        case .newsItem(let guardianArticle):
+            return guardianArticle
+        default:
+            return nil
+        }
+    }
 }
 
 enum NewsFeedOption: String, CaseIterable, Identifiable {

@@ -9,10 +9,12 @@ import SwiftUI
 
 enum AppImageService: String {
     // MARK: - Icons
+    case refreshButtonIcon = "refreshButtonIcon"
     
     // MARK: - EmptyViewIcons
     case noBlockedArticlesIcon = "noBlockedArticlesIcon"
     case noFavoriteArticlesIcon = "noFavoriteArticlesIcon"
+    case loadArticlesErrorIcon = "loadArticlesErrorIcon"
     
     // MARK: - Context Menu
     case contextMenuIcon = "contextMenuIcon"
