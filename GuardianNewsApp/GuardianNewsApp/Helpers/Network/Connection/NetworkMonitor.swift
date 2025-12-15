@@ -20,4 +20,9 @@ final class NetworkMonitor {
         }
         networkMonitor.start(queue: workerQueue)
     }
+    
+    var overlayError: AppOverlayError? {
+        isConnected ? nil : AppOverlayError(alertStyle: .oneButton,
+                                            title: "No Internet Connection")
+    }
 }

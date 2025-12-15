@@ -11,12 +11,12 @@ import Foundation
 @Model
 final class GuardianArticleData {
     @Attribute(.unique) var id: String
-    var type: String
-    var sectionId: String
-    var sectionName: String
-    var webPublicationDate: String
-    var webUrl: String
-    var webTitle: String
+    var type: String?
+    var sectionId: String?
+    var sectionName: String?
+    var webPublicationDate: String?
+    var webUrl: String?
+    var webTitle: String?
     
     var blocked: Bool? = false
     var favorite: Bool? = false
@@ -34,7 +34,7 @@ final class GuardianArticleData {
     }
 
     func getBottomText() -> String {
-        return "\(sectionName) • \(DateFormattingService.formatISOToDisplay(webPublicationDate) ?? "")"
+        return "\(sectionName ?? "") • \(DateFormattingService.formatISOToDisplay(webPublicationDate ?? "") ?? "")"
     }
     
     func getStruct() -> GuardianArticle {

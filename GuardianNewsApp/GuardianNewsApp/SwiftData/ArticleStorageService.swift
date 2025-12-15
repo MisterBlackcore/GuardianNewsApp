@@ -94,7 +94,7 @@ final class SwiftDataStorage: ObservableObject {
         }
     }
 
-    func deleteArticle(_ article: GuardianArticleData) {
+    private func deleteArticle(_ article: GuardianArticleData) {
         guard let context = modelContext else { return }
 
         do {
@@ -109,7 +109,7 @@ final class SwiftDataStorage: ObservableObject {
     func getBlockedSources() -> [String] {
         savedArticles
             .filter { $0.blocked == true }
-            .map { $0.sectionName }
+            .map { $0.sectionName ?? ""}
     }
     
     func getArticleIfSaved(by id: String) -> GuardianArticleData? {
@@ -140,7 +140,7 @@ final class SwiftDataStorage: ObservableObject {
                                     $0.favorite == true
                                 }
                                 .sorted {
-                                    $0.webPublicationDate > $1.webPublicationDate
+                                    $0.webPublicationDate ?? "" > $1.webPublicationDate ?? ""
                                 }
                                 .map {
                                     FeedItem.newsItem($0.getStruct())
@@ -153,7 +153,7 @@ final class SwiftDataStorage: ObservableObject {
                                     $0.blocked == true
                                 }
                                 .sorted {
-                                    $0.webPublicationDate > $1.webPublicationDate
+                                    $0.webPublicationDate ?? "" > $1.webPublicationDate ?? ""
                                 }
                                 .map {
                                     FeedItem.newsItem($0.getStruct())

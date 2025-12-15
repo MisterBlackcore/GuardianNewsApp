@@ -18,8 +18,13 @@ final class NewsFeedViewModel: ObservableObject {
     
     @Published var feedItemsToShow: [FeedItem] = []
     @Published var selectedOption: NewsFeedOption = .all
-    @Published var error: NewsApiError? = NewsApiError(statusCode: 0, reason: "sadada")
-    @Published var blockError: String?
+    @Published var overlayError: AppOverlayError?
+    @Published var loading = false
+
+    func handle(apiError: NewsApiError) {
+        overlayError = AppOverlayError(alertStyle: .oneButton, title: apiError.error.reason)
+    }
+
     @Published var urlToOpen: String?
     @Published private var allFeedItems: [FeedItem] = []
     
@@ -37,19 +42,18 @@ final class NewsFeedViewModel: ObservableObject {
             $selectedOption,
             storage.$blockedArticles
         )
-        .map { allItems, option, blockedItems in
+        .map { [weak self] allItems, option, blockedItems in
             switch option {
             case .all:
                 let newsArticles = allItems.compactMap { item -> GuardianArticle? in
                     if case .newsItem(let article) = item, article.blocked == false {
-                        print(article.sectionName)
                         return article
                     }
                     return nil
                 }
-                return self.buildFeed(articles: newsArticles, navigation: self.cachedNavigationResult ?? [])
+                return self?.buildFeed(articles: newsArticles, navigation: self?.cachedNavigationResult ?? []) ?? []
             case .favorites:
-                return self.storage.favoriteArticles
+                return self?.storage.favoriteArticles ?? []
             case .blocked:
                 return blockedItems
             }
@@ -62,7 +66,8 @@ final class NewsFeedViewModel: ObservableObject {
             pageNumber = 1
             allFeedItems = []
         }
-        error = nil
+        loading = true
+        overlayError = nil
         
         if let cachedNavigationResult {
             loadArticles(with: cachedNavigationResult, reset: reset)
@@ -100,6 +105,7 @@ final class NewsFeedViewModel: ObservableObject {
             .sink { [weak self] newFeed in
                 guard let self else { return }
                 createNewFeed(reset: reset, newItems: newFeed)
+                self.loading = false
             }
             .store(in: &cancellables)
     }
@@ -126,6 +132,7 @@ final class NewsFeedViewModel: ObservableObject {
             .sink { [weak self] articles in
                 guard let self else { return }
                 let newItems = self.createCompleteFeed(navigation: navigationResult, articles: articles, reset: reset)
+                self.loading = false
                 createNewFeed(reset: reset, newItems: newItems)
             }
             .store(in: &cancellables)
@@ -159,7 +166,7 @@ final class NewsFeedViewModel: ObservableObject {
                     if let saved = storage.getArticleIfSaved(by: article.id) {
                         updatedArticle.favorite = saved.favorite
                     }
-                    if blockedSources.contains(article.sectionName) {
+                    if blockedSources.contains(article.sectionName ?? "") {
                         updatedArticle.blocked = true
                     }
                     return .newsItem(updatedArticle)
@@ -172,10 +179,11 @@ final class NewsFeedViewModel: ObservableObject {
     }
     
     private func parseError(from error: Error) {
+        loading = false
         if let apiError = error as? NewsApiError {
-            self.error = apiError
+            handle(apiError: apiError)
         } else {
-            self.error = NewsApiError(reason: error.localizedDescription)
+            handle(apiError: NewsApiError(reason: error.localizedDescription))
         }
     }
     
@@ -245,7 +253,7 @@ final class NewsFeedViewModel: ObservableObject {
                 switch feedItem {
                 case .newsItem(var article):
                     if article.sectionName == sectionName {
-                        article.blocked = storage.getBlockedSources().contains(sectionName)
+                        article.blocked = storage.getBlockedSources().contains(sectionName ?? "")
                         article.favorite = item.favorite
                     }
                     return .newsItem(article)

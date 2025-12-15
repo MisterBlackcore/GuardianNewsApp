@@ -15,18 +15,18 @@ struct GuardianResponseContent: Decodable {
 
 struct GuardianArticle: Decodable {
     let id: String
-    let type: String
-    let sectionId: String
-    let sectionName: String
-    let webPublicationDate: String
-    let webTitle: String
-    let webUrl: String
+    let type: String?
+    let sectionId: String?
+    let sectionName: String?
+    let webPublicationDate: String?
+    let webTitle: String?
+    let webUrl: String?
     
     var blocked: Bool?
     var favorite: Bool?
     
     func getBottomText() -> String {
-        return "\(sectionName) • \(DateFormattingService.formatISOToDisplay(webPublicationDate) ?? "")"
+        return "\(sectionName ?? "") • \(DateFormattingService.formatISOToDisplay(webPublicationDate ?? "") ?? "")"
     }
     
     enum CodingKeys: String, CodingKey {
@@ -34,12 +34,12 @@ struct GuardianArticle: Decodable {
     }
     
     init(id: String,
-         type: String,
-         sectionId: String,
-         sectionName: String,
-         webPublicationDate: String,
-         webTitle: String,
-         webUrl: String,
+         type: String?,
+         sectionId: String?,
+         sectionName: String?,
+         webPublicationDate: String?,
+         webTitle: String?,
+         webUrl: String?,
          blocked: Bool?,
          favorite: Bool?) {
         self.id = id

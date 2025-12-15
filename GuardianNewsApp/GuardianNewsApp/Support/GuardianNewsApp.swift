@@ -8,8 +8,7 @@
 import SwiftUI
 
 @main
-struct GuardianNewsApp: App {
-    
+struct GuardianNewsApp: App {    
     @State private var networkMonitor = NetworkMonitor()
     
     var body: some Scene {

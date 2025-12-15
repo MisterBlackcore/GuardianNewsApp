@@ -7,13 +7,19 @@
 
 import SwiftUI
 
-struct NewsRowView: View {
-    
+struct NewsRowView: View {    
     @State var articleModel: GuardianArticle
-    @State var blockAlert: BlockAlertViewModel?
-    @State var showingAlert = false
+    @Binding var alert: AppOverlayError?
     let rowOption: NewsFeedOption
     let buttonAction: (GuardianArticle) -> Void
+    
+    private var favoriteOption: NewsRowMenuOption {
+        NewsRowMenuOption.favorite(articleModel.favorite == false)
+    }
+    
+    private var blockedOption: NewsRowMenuOption {
+        NewsRowMenuOption.block(articleModel.blocked == false)
+    }
     
     var body: some View {
         HStack(spacing: 0) {
@@ -25,8 +31,7 @@ struct NewsRowView: View {
                 .padding(.trailing, 8)
             
             VStack(alignment: .leading, spacing: 8) {
-//                Text(articleModel.webTitle)
-                Text(articleModel.sectionName)
+                Text(articleModel.webTitle ?? "News title")
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.projectBlack)
                     .lineLimit(3)
@@ -43,23 +48,12 @@ struct NewsRowView: View {
                 Menu {
                     if rowOption != .blocked {
                         Button(action: toggleFavorite) {
-                            Label(
-                                articleModel.favorite == false ? "Add to Favorites" : "Remove from Favorites",
-                                image: articleModel.favorite == false ? .addToFavoriteIcon : .removeFromFavoriteIcon
-                            )
+                            Label(favoriteOption.rowButtonText, image: favoriteOption.imageName)
                         }
                     }
-                    
-                    Button(role: .destructive) {
-                        showingAlert = true
-                        blockAlert = articleModel.blocked == false
-                            ? .block(articleModel)
-                            : .unblock(articleModel)
-                    } label: {
-                        Label(
-                            articleModel.blocked == false ? "Block" : "Unblock",
-                            image: articleModel.blocked == false ? .blockActionIcon : .unblockActionIcon
-                        )
+
+                    Button(role: .destructive, action: toogleBlock) {
+                        Label(blockedOption.rowButtonText, image: blockedOption.imageName)
                     }
                 } label: {
                     Image(AppImageService.contextMenuIcon)
@@ -69,17 +63,6 @@ struct NewsRowView: View {
                 
                 Spacer()
             }
-        }
-        .alert(blockAlert?.getTitle() ?? "", isPresented: $showingAlert) {
-            Button(blockAlert?.getActionButton() ?? "", role: .destructive) {
-                toogleBlock()
-                blockAlert = nil
-            }
-            Button(blockAlert?.getCancelButton() ?? "", role: .cancel) {
-                blockAlert = nil
-            }
-        } message: {
-            Text(blockAlert?.getDescription() ?? "")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 12)
@@ -92,7 +75,13 @@ struct NewsRowView: View {
     }
     
     private func toogleBlock() {
-        articleModel.blocked?.toggle()
-        buttonAction(articleModel)
+        alert = AppOverlayError(alertStyle: .twoButton,
+                                    title: blockedOption.alertTitle,
+                                    description: blockedOption.alertDescription,
+                                    actionTitle: blockedOption.rowButtonText,
+                                    secondButtonTitle: "Cancel") {
+            articleModel.blocked?.toggle()
+            buttonAction(articleModel)
+        }
     }
 }

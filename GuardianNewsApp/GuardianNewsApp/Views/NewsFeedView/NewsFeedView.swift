@@ -9,13 +9,17 @@ import SwiftUI
 
 struct NewsFeedView: View {
     
+    @Environment(\.openURL) var openURL
     @Environment(NetworkMonitor.self) private var newtworkMonitor
     @StateObject private var viewModel = NewsFeedViewModel()
-    @State private var showInternetAlert = false
     @State private var pushNavigation: NavigationResult?
     @State private var modalNavigation: NavigationResult?
     @State private var fullScreenNavigation: NavigationResult?
     @State private var scrollViewHeight: CGFloat = 0
+    
+    private var activeOverlayError: AppOverlayError? {
+        viewModel.overlayError ?? newtworkMonitor.overlayError
+    }
 
     var body: some View {
         NavigationStack {
@@ -30,11 +34,11 @@ struct NewsFeedView: View {
                         .pickerStyle(SegmentedPickerStyle())
                         .padding(.horizontal, 16)
                         
-                        if viewModel.feedItemsToShow.isEmpty || viewModel.error != nil {
+                        if viewModel.feedItemsToShow.isEmpty {
                             VStack {
                                 switch viewModel.selectedOption {
                                 case .all:
-                                    if newtworkMonitor.isConnected {
+                                    if viewModel.loading {
                                         ProgressView()
                                             .scaleEffect(1.2)
                                             .padding()
@@ -102,39 +106,33 @@ struct NewsFeedView: View {
             .fullScreenCover(item: $fullScreenNavigation) { model in
                 FullScreenNavigationView(model: model)
             }
-            .alert(item: $viewModel.error) { error in
-                Alert(
-                    title: Text(error.error.reason),
-                    dismissButton: .default(Text("OK")) {
-                        viewModel.error = nil
-                    }
-                )
-            }
-            .alert("No Internet Connection", isPresented: $showInternetAlert) {
-                Button("OK", role: .cancel) {
-                    if viewModel.feedItemsToShow.isEmpty {
-                        viewModel.loadFeed()
-                        showInternetAlert = false
-                    }
-                }
-            }
-            .onChange(of: newtworkMonitor.isConnected) { oldValue, newValue in
-                showInternetAlert = newValue
-            }
             .navigationDestination(item: $viewModel.urlToOpen) { url in
                 WebView(stringUrl: url)
             }
         }
+        .overlayAlert($viewModel.overlayError)
     }
 
     @ViewBuilder
     private func rowView(for item: FeedItem) -> some View {
         switch item {
         case .newsItem(let article):
-            NewsRowView(articleModel: article, rowOption: viewModel.selectedOption, buttonAction: viewModel.updateItem)
+            NewsRowView(articleModel: article,
+                        alert: $viewModel.overlayError,
+                        rowOption: viewModel.selectedOption,
+                        buttonAction: handleArticle)
             .frame(height: 110)
             .onTapGesture {
-                viewModel.urlToOpen = article.webUrl
+                if #available(iOS 26.0, *) {
+                    if let stringURL = article.webUrl, let url = URL(string: stringURL) {
+                        openURL(url, prefersInApp: true)
+                    } else {
+                        viewModel.overlayError = AppOverlayError(alertStyle: .oneButton,
+                                                                 title: "Can't open the link")
+                    }
+                } else {
+                    viewModel.urlToOpen = article.webUrl
+                }
             }
         case .navigationBlock(let navigationModel):
             NavigationRowView(navigationModel: navigationModel, buttonAction: handleNavigation)
@@ -150,6 +148,10 @@ struct NewsFeedView: View {
         case .fullScreen:
             fullScreenNavigation = navigationItem
         }
+    }
+    
+    private func handleArticle(article: GuardianArticle) {
+        viewModel.updateItem(item: article)
     }
 }
 

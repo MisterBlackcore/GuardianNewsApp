@@ -66,7 +66,3 @@ struct NavigationRowView: View {
         buttonAction(navigationModel)
     }
 }
-
-#Preview {
-    NewsFeedView()
-}
